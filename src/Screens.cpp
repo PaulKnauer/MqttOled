@@ -1,5 +1,9 @@
 #include "Screens.h"
 
+namespace {
+constexpr uint8_t kScreenWidth = 64;
+constexpr uint8_t kScreenHeight = 48;
+}
 
 static void printFloatOrDash(U8G2& u8g2, float v, const char* fmt) {
   char buf[16];
@@ -11,20 +15,35 @@ static void printFloatOrDash(U8G2& u8g2, float v, const char* fmt) {
   u8g2.print(buf);
 }
 
+static void drawCenteredText(U8G2& u8g2, int y, const char* text) {
+  const int textWidth = u8g2.getStrWidth(text);
+  const int x = (kScreenWidth - textWidth) / 2;
+  u8g2.setCursor((x < 0) ? 0 : x, y);
+  u8g2.print(text);
+}
+
+static void drawTempCentered(U8G2& u8g2, float tempC) {
+  char buf[12];
+  if (isnan(tempC)) {
+    strcpy(buf, "--");
+  } else {
+    snprintf(buf, sizeof(buf), "%.1fC", tempC);
+  }
+  drawCenteredText(u8g2, 33, buf);
+}
+
 static void drawRoom(U8G2& u8g2, const char* title, const RoomState& room) {
-  u8g2.setFont(u8g2_font_5x8_tf);
-  u8g2.setCursor(0, 8);
+  u8g2.setFont(u8g2_font_6x10_tf);
+  u8g2.setCursor(0, 9);
   u8g2.print(title);
 
-  // Big temp (room)
-  u8g2.setFont(u8g2_font_9x15_tf);
-  u8g2.setCursor(0, 30);
-  printFloatOrDash(u8g2, room.tempC, "%.1f");
-  u8g2.print("C");
+  // Big temp (room), centered for balance.
+  u8g2.setFont(u8g2_font_10x20_tf);
+  drawTempCentered(u8g2, room.tempC);
 
-  // Humidity
+  // Humidity footer.
   u8g2.setFont(u8g2_font_5x8_tf);
-  u8g2.setCursor(0, 42);
+  u8g2.setCursor(0, kScreenHeight - 1);
   u8g2.print("H ");
   printFloatOrDash(u8g2, room.hum, "%.0f");
   u8g2.print("%");
@@ -61,26 +80,34 @@ void screensDraw(U8G2& u8g2, const AppState& state, uint8_t screenIndex) {
   switch (screenIndex) {
     case 0: {
       // Weather overview
-      u8g2.setFont(u8g2_font_5x8_tf);
-      u8g2.setCursor(0, 8);
+      u8g2.setFont(u8g2_font_6x10_tf);
+      u8g2.setCursor(0, 9);
       u8g2.print("Weather");
 
-      // Temp big
-      u8g2.setFont(u8g2_font_9x15_tf);
-      u8g2.setCursor(0, 30);
-      printFloatOrDash(u8g2, state.weather.tempC, "%.1f");
-      u8g2.print("C");
+      // Temp big (centered).
+      u8g2.setFont(u8g2_font_10x20_tf);
+      drawTempCentered(u8g2, state.weather.tempC);
 
-      // Humidity + wind small at bottom
+      // Humidity + wind at bottom.
       u8g2.setFont(u8g2_font_5x8_tf);
-      u8g2.setCursor(0, 42);
+      u8g2.setCursor(0, kScreenHeight - 1);
       u8g2.print("H ");
       printFloatOrDash(u8g2, state.weather.hum, "%.0f");
       u8g2.print("%");
 
-      u8g2.setCursor(36, 42);
-      u8g2.print("W ");
-      printFloatOrDash(u8g2, state.weather.wind, "%.1f");
+      const char* windLabel = "W ";
+      char windBuf[12];
+      if (isnan(state.weather.wind)) {
+        strcpy(windBuf, "--");
+      } else {
+        snprintf(windBuf, sizeof(windBuf), "%.1f", state.weather.wind);
+      }
+      const int windLabelWidth = u8g2.getStrWidth(windLabel);
+      const int windValueWidth = u8g2.getStrWidth(windBuf);
+      const int windX = kScreenWidth - (windLabelWidth + windValueWidth);
+      u8g2.setCursor((windX < 0) ? 0 : windX, kScreenHeight - 1);
+      u8g2.print(windLabel);
+      u8g2.print(windBuf);
       break;
     }
     case 1: drawRoom(u8g2, "Office",  state.office); break;
