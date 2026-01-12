@@ -50,7 +50,7 @@ static void drawRoom(U8G2& u8g2, const char* title, const RoomState& room) {
 }
 
 uint8_t screensVisibleCount(const AppState& state) {
-  uint8_t count = 1; // Weather is always visible
+  uint8_t count = 0;
   if (state.office.online) count++;
   if (state.bedroom.online) count++;
   if (state.garage.online) count++;
@@ -58,18 +58,17 @@ uint8_t screensVisibleCount(const AppState& state) {
 }
 
 uint8_t screensResolveIndex(const AppState& state, uint8_t visibleIndex) {
-  if (visibleIndex == 0) return 0; // Weather
-  uint8_t idx = 1;
+  uint8_t idx = 0;
   if (state.office.online) {
-    if (idx == visibleIndex) return 1;
+    if (idx == visibleIndex) return 0;
     idx++;
   }
   if (state.bedroom.online) {
-    if (idx == visibleIndex) return 2;
+    if (idx == visibleIndex) return 1;
     idx++;
   }
   if (state.garage.online) {
-    if (idx == visibleIndex) return 3;
+    if (idx == visibleIndex) return 2;
   }
   return 0;
 }
@@ -78,41 +77,9 @@ void screensDraw(U8G2& u8g2, const AppState& state, uint8_t screenIndex) {
   u8g2.clearBuffer();
 
   switch (screenIndex) {
-    case 0: {
-      // Weather overview
-      u8g2.setFont(u8g2_font_6x10_tf);
-      u8g2.setCursor(0, 9);
-      u8g2.print("Weather");
-
-      // Temp big (centered).
-      u8g2.setFont(u8g2_font_10x20_tf);
-      drawTempCentered(u8g2, state.weather.tempC);
-
-      // Humidity + wind at bottom.
-      u8g2.setFont(u8g2_font_5x8_tf);
-      u8g2.setCursor(0, kScreenHeight - 1);
-      u8g2.print("H ");
-      printFloatOrDash(u8g2, state.weather.hum, "%.0f");
-      u8g2.print("%");
-
-      const char* windLabel = "W ";
-      char windBuf[12];
-      if (isnan(state.weather.wind)) {
-        strcpy(windBuf, "--");
-      } else {
-        snprintf(windBuf, sizeof(windBuf), "%.1f", state.weather.wind);
-      }
-      const int windLabelWidth = u8g2.getStrWidth(windLabel);
-      const int windValueWidth = u8g2.getStrWidth(windBuf);
-      const int windX = kScreenWidth - (windLabelWidth + windValueWidth);
-      u8g2.setCursor((windX < 0) ? 0 : windX, kScreenHeight - 1);
-      u8g2.print(windLabel);
-      u8g2.print(windBuf);
-      break;
-    }
-    case 1: drawRoom(u8g2, "Office",  state.office); break;
-    case 2: drawRoom(u8g2, "Bedroom", state.bedroom); break;
-    case 3: drawRoom(u8g2, "Garage",  state.garage); break;
+    case 0: drawRoom(u8g2, "Office",  state.office); break;
+    case 1: drawRoom(u8g2, "Bedroom", state.bedroom); break;
+    case 2: drawRoom(u8g2, "Garage",  state.garage); break;
     default: break;
   }
 

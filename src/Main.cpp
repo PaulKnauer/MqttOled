@@ -23,7 +23,6 @@ ScreenManager screenManager(SCREEN_ROTATE_MS);
 AppState app;
 
 static const char* const kMqttTopics[] = {
-  TOPIC_WEATHER,
   TOPIC_OFFICE_READING,
   TOPIC_BEDROOM_READING,
   TOPIC_GARAGE_READING,
@@ -42,12 +41,6 @@ static void onMqttMessage(const char* topic, const uint8_t* payload, unsigned in
   const unsigned long now = millis();
 
   bool updated = false;
-
-  if (strcmp(topic, TOPIC_WEATHER) == 0) {
-    parseWeatherPayload(buf, app.weather);
-    app.weather.updatedMs = now;
-    updated = true;
-  }
 
   auto setStatus = [&](RoomState& r, bool online) {
     r.online = online;
